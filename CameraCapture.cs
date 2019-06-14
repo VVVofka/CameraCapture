@@ -99,10 +99,12 @@ namespace CameraCapture {
 			List<Rectangle> faces = new List<Rectangle>();
 			List<Rectangle> eyes = new List<Rectangle>();
 
-			DetectFace.Detect(
-			  image, "haarcascade_frontalface_default.xml", "haarcascade_eye.xml",
-			  faces, eyes,
-			  out detectionTime);
+//			DetectFace.Detect(
+//			  image, "haarcascade_frontalface_default.xml", "haarcascade_eye.xml",
+//			  faces, eyes, out detectionTime);
+			DetectFace.DetectOnlyFace(
+			  image, "haarcascade_frontalface_default.xml",
+			  faces, out detectionTime);
 
 			foreach (Rectangle face in faces)
 				CvInvoke.Rectangle(image, face, new Bgr(Color.Red).MCvScalar, 2);

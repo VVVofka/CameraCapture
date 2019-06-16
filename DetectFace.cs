@@ -13,14 +13,10 @@ using Emgu.CV.Cuda;
 
 namespace CameraCapture {
 	public static class DetectFace {
-		public static void Detect(
-		   IInputArray image, String faceFileName, String eyeFileName,
-		   List<Rectangle> faces, List<Rectangle> eyes,
-		   out long detectionTime) {
+		public static void Detect(IInputArray image, String faceFileName, String eyeFileName,
+		   List<Rectangle> faces, List<Rectangle> eyes, out long detectionTime) {
 			Stopwatch watch;
-
 			using (InputArray iaImage = image.GetInputArray()) {
-
 #if !(__IOS__ || NETFX_CORE)
 				if (iaImage.Kind == InputArray.Type.CudaGpuMat && CudaInvoke.HasCuda) {
 					using (CudaCascadeClassifier face = new CudaCascadeClassifier(faceFileName))
@@ -104,22 +100,23 @@ namespace CameraCapture {
 				}
 				detectionTime = watch.ElapsedMilliseconds;
 			}
-		} // /////////////////////////////////////////////////////////////////////////////////////////////////////////
-		public static void DetectOnlyFace(
-		   IInputArray image, String faceFileName, 
-		   List<Rectangle> faces, 
-		   out long detectionTime) {
+		} 
+		// /////////////////////////////////////////////////////////////////////////////////////////////////////////
+		public static void DetectOnlyFace(IInputArray image, String faceFileName, 
+		   List<Rectangle> faces, out long detectionTime,
+		   double ScaleFactor, int MinNeighbors, Size MinObjectSize) {
 			Stopwatch watch;
-
 			using (InputArray iaImage = image.GetInputArray()) {
-
 #if !(__IOS__ || NETFX_CORE)
 				if (iaImage.Kind == InputArray.Type.CudaGpuMat && CudaInvoke.HasCuda) {
 					using (CudaCascadeClassifier face = new CudaCascadeClassifier(faceFileName)) {
-						face.ScaleFactor = 1.1;
-						face.MinNeighbors = 10;
-						face.MinObjectSize = Size.Empty;
+//						face.ScaleFactor = 1.1;
+//						face.MinNeighbors = 10;
+//						face.MinObjectSize = Size.Empty;
 						watch = Stopwatch.StartNew();
+						face.ScaleFactor = ScaleFactor;
+						face.MinNeighbors = MinNeighbors;
+						face.MinObjectSize = MinObjectSize;
 						using (CudaImage<Bgr, Byte> gpuImage = new CudaImage<Bgr, byte>(image))
 						using (CudaImage<Gray, Byte> gpuGray = gpuImage.Convert<Gray, Byte>())
 						using (GpuMat region = new GpuMat()) {
@@ -147,9 +144,9 @@ namespace CameraCapture {
 							//The second dimension is the index of the rectangle in the specific channel                     
 							Rectangle[] facesDetected = face.DetectMultiScale(
 							   ugray,
-							   1.1,
-							   10,
-							   new Size(20, 20));
+							   ScaleFactor,
+							   MinNeighbors,
+							   MinObjectSize);
 
 							faces.AddRange(facesDetected);
 						}

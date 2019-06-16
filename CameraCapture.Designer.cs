@@ -49,6 +49,12 @@ namespace CameraCapture
 			this.cannyImageBox = new Emgu.CV.UI.ImageBox();
 			this.panel4 = new System.Windows.Forms.Panel();
 			this.label4 = new System.Windows.Forms.Label();
+			this.txScaleFactor = new System.Windows.Forms.TextBox();
+			this.lbScaleFactor = new System.Windows.Forms.Label();
+			this.lbMinNeighbors = new System.Windows.Forms.Label();
+			this.txMinNeighbors = new System.Windows.Forms.TextBox();
+			this.lbMinObjectSize = new System.Windows.Forms.Label();
+			this.txMinObjectSize = new System.Windows.Forms.TextBox();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
 			this.splitContainer1.SuspendLayout();
@@ -80,6 +86,12 @@ namespace CameraCapture
 			// 
 			// splitContainer1.Panel1
 			// 
+			this.splitContainer1.Panel1.Controls.Add(this.txMinObjectSize);
+			this.splitContainer1.Panel1.Controls.Add(this.lbMinObjectSize);
+			this.splitContainer1.Panel1.Controls.Add(this.txMinNeighbors);
+			this.splitContainer1.Panel1.Controls.Add(this.lbMinNeighbors);
+			this.splitContainer1.Panel1.Controls.Add(this.lbScaleFactor);
+			this.splitContainer1.Panel1.Controls.Add(this.txScaleFactor);
 			this.splitContainer1.Panel1.Controls.Add(this.flipVerticalButton);
 			this.splitContainer1.Panel1.Controls.Add(this.flipHorizontalButton);
 			this.splitContainer1.Panel1.Controls.Add(this.captureButton);
@@ -286,6 +298,61 @@ namespace CameraCapture
 			this.label4.TabIndex = 0;
 			this.label4.Text = "Canny Edges:";
 			// 
+			// txScaleFactor
+			// 
+			this.txScaleFactor.Location = new System.Drawing.Point(485, 13);
+			this.txScaleFactor.Name = "txScaleFactor";
+			this.txScaleFactor.Size = new System.Drawing.Size(38, 20);
+			this.txScaleFactor.TabIndex = 3;
+			this.txScaleFactor.Text = "1.01";
+			this.txScaleFactor.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			// 
+			// lbScaleFactor
+			// 
+			this.lbScaleFactor.AutoSize = true;
+			this.lbScaleFactor.Location = new System.Drawing.Point(419, 16);
+			this.lbScaleFactor.Name = "lbScaleFactor";
+			this.lbScaleFactor.Size = new System.Drawing.Size(64, 13);
+			this.lbScaleFactor.TabIndex = 4;
+			this.lbScaleFactor.Text = "ScaleFactor";
+			this.lbScaleFactor.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+			// 
+			// lbMinNeighbors
+			// 
+			this.lbMinNeighbors.AutoSize = true;
+			this.lbMinNeighbors.Location = new System.Drawing.Point(538, 16);
+			this.lbMinNeighbors.Name = "lbMinNeighbors";
+			this.lbMinNeighbors.Size = new System.Drawing.Size(75, 13);
+			this.lbMinNeighbors.TabIndex = 5;
+			this.lbMinNeighbors.Text = "Min Neighbors";
+			this.lbMinNeighbors.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+			// 
+			// txMinNeighbors
+			// 
+			this.txMinNeighbors.Location = new System.Drawing.Point(608, 12);
+			this.txMinNeighbors.Name = "txMinNeighbors";
+			this.txMinNeighbors.Size = new System.Drawing.Size(37, 20);
+			this.txMinNeighbors.TabIndex = 6;
+			this.txMinNeighbors.Text = "9";
+			this.txMinNeighbors.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+			// 
+			// lbMinObjectSize
+			// 
+			this.lbMinObjectSize.AutoSize = true;
+			this.lbMinObjectSize.Location = new System.Drawing.Point(672, 17);
+			this.lbMinObjectSize.Name = "lbMinObjectSize";
+			this.lbMinObjectSize.Size = new System.Drawing.Size(81, 13);
+			this.lbMinObjectSize.TabIndex = 7;
+			this.lbMinObjectSize.Text = "Min Object Size";
+			// 
+			// txMinObjectSize
+			// 
+			this.txMinObjectSize.Location = new System.Drawing.Point(759, 13);
+			this.txMinObjectSize.Name = "txMinObjectSize";
+			this.txMinObjectSize.Size = new System.Drawing.Size(62, 20);
+			this.txMinObjectSize.TabIndex = 8;
+			this.txMinObjectSize.Text = "130";
+			// 
 			// CameraCapture
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -295,6 +362,7 @@ namespace CameraCapture
 			this.Name = "CameraCapture";
 			this.Text = "Camera Capture";
 			this.splitContainer1.Panel1.ResumeLayout(false);
+			this.splitContainer1.Panel1.PerformLayout();
 			this.splitContainer1.Panel2.ResumeLayout(false);
 			this.splitContainer1.ResumeLayout(false);
 			this.splitContainer2.Panel1.ResumeLayout(false);
@@ -343,6 +411,12 @@ namespace CameraCapture
         private Emgu.CV.UI.ImageBox grayscaleImageBox;
         private Emgu.CV.UI.ImageBox smoothedGrayscaleImageBox;
         private Emgu.CV.UI.ImageBox cannyImageBox;
-    }
+		private System.Windows.Forms.TextBox txScaleFactor;
+		private System.Windows.Forms.Label lbScaleFactor;
+		private System.Windows.Forms.TextBox txMinNeighbors;
+		private System.Windows.Forms.Label lbMinNeighbors;
+		private System.Windows.Forms.TextBox txMinObjectSize;
+		private System.Windows.Forms.Label lbMinObjectSize;
+	}
 }
 

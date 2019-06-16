@@ -104,7 +104,8 @@ namespace CameraCapture {
 //			  faces, eyes, out detectionTime);
 			DetectFace.DetectOnlyFace(
 			  image, "haarcascade_frontalface_default.xml",
-			  faces, out detectionTime);
+			  faces, out detectionTime,
+			  FaceParam.ScaleFactor(txScaleFactor), FaceParam.MinNeighbors(txMinNeighbors), FaceParam.MinObjectSize(txMinObjectSize));
 
 			foreach (Rectangle face in faces)
 				CvInvoke.Rectangle(image, face, new Bgr(Color.Red).MCvScalar, 2);
@@ -112,13 +113,15 @@ namespace CameraCapture {
 				CvInvoke.Rectangle(image, eye, new Bgr(Color.Blue).MCvScalar, 2);
 
 			//display the image 
-			using (InputArray iaImage = image.GetInputArray()) {
-				string sreport = String.Format(
-				   "Completed face and eye detection using {0} in {1} milliseconds",
-				   (iaImage.Kind == InputArray.Type.CudaGpuMat && CudaInvoke.HasCuda) ? "CUDA" :
-				   (iaImage.IsUMat && CvInvoke.UseOpenCL) ? "OpenCL" : "CPU", detectionTime);
-				Console.WriteLine(sreport);
-			}
+			if(faces.Count > 0)
+				using (InputArray iaImage = image.GetInputArray()) {
+					string sreport = String.Format(
+					   "Completed face detection using {0} in {1} milliseconds. Rct={2} x {3}",
+					   (iaImage.Kind == InputArray.Type.CudaGpuMat && CudaInvoke.HasCuda) ? "CUDA" :
+					   (iaImage.IsUMat && CvInvoke.UseOpenCL) ? "OpenCL" : "CPU", detectionTime,
+					   faces[0].Width, faces[0].Height);
+					Console.WriteLine(sreport);
+				}
 		}
 
 	} // *************************************************************************************************************

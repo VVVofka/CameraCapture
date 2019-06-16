@@ -101,6 +101,7 @@
     <Compile Include="CommonAssemblyInfo.cs" />
     <Compile Include="DetectFace.cs" />
     <Compile Include="FaceParam.cs" />
+    <Compile Include="Gemor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="CameraCapture.resx">

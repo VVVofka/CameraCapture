@@ -25,6 +25,7 @@ namespace CameraCapture {
 		private Mat _smallGrayFrame;
 		private Mat _smoothedGrayFrame;
 		private Mat _cannyFrame;
+		private Gemor gemor = new Gemor();
 
 		public CameraCapture() {
 			InitializeComponent();
@@ -111,17 +112,18 @@ namespace CameraCapture {
 				CvInvoke.Rectangle(image, face, new Bgr(Color.Red).MCvScalar, 2);
 			foreach (Rectangle eye in eyes)
 				CvInvoke.Rectangle(image, eye, new Bgr(Color.Blue).MCvScalar, 2);
-
-			//display the image 
+			double r = gemor.put(faces.Count > 0);
 			if(faces.Count > 0)
 				using (InputArray iaImage = image.GetInputArray()) {
 					string sreport = String.Format(
-					   "Completed face detection using {0} in {1} milliseconds. Rct={2} x {3}",
+					   "Completed face detection using {0} in {1} milliseconds. Rct={2} x {3} r={4}",
 					   (iaImage.Kind == InputArray.Type.CudaGpuMat && CudaInvoke.HasCuda) ? "CUDA" :
 					   (iaImage.IsUMat && CvInvoke.UseOpenCL) ? "OpenCL" : "CPU", detectionTime,
-					   faces[0].Width, faces[0].Height);
+					   faces[0].Width, faces[0].Height, r);
 					Console.WriteLine(sreport);
 				}
+			else
+				Console.WriteLine(r.ToString());
 		}
 
 	} // *************************************************************************************************************

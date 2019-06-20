@@ -65,6 +65,7 @@ namespace CameraCapture {
 					Console.WriteLine("Wrong case!");
 					break;
 			}   // switch (mode) 
+			Console.WriteLine("Signal:{0} mode:{1} tmrSit:{2} tmrOut:{3}", signal, mode, tmrSit, tmrOut, tmrGo);
 		} // //////////////////////////////////////////////////////////////////////////////////
 		void inSuspend(Signal signal) {
 			if (signal == Signal.yes) {

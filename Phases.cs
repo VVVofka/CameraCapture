@@ -11,10 +11,12 @@ namespace CameraCapture {
 		control
 	};
 	class Phases {
-		static class Intervals {
-			static public long Sit = 30 * 60;   // по истечении переход в mode.Go
-			static public long ShortUp = 12;    // по истечении переход в mode.Ex
-			static public long Ex = 1 * 60;     // по истечении переход в mode.Suspend
+		public static class Intervals {
+			static public long Sit = 5 * 60;   // по истечении переход в mode.Go
+			static public long ShortUp = 10;    // по истечении переход в mode.Ex
+			static public long Ex = 45;     // по истечении переход в mode.Suspend
+			static public long GoBigSound = 60; // большое напоминание встать
+			static public long GoSmallSound = 5;// короткое напоминание встать
 		}
 		enum Modes {
 			Suspend,
@@ -25,10 +27,12 @@ namespace CameraCapture {
 			ShortUpAfterGo,
 			ExAfterGo
 		};
-		readonly string SOUND_GO_BACK = ""; // !!!
 		readonly string SOUND_NOTIFY_EX = ""; // !!!
 		readonly string SOUND_EX_COMPLETE = ""; // !!!
 		readonly string SOUND_NOTIFY_SUSPEND = ""; // !!!
+		static public readonly string SOUND_NOTIFY_GO_SMALL_TICK = ""; // !!!
+		static public readonly string SOUND_NOTIFY_GO_BIG_TICK = ""; // !!!
+		static public readonly string SOUND_SILENT = ""; // !!!
 
 		Modes mode = Modes.Suspend;
 		Stopwatch tmrSit = new Stopwatch();
@@ -111,7 +115,7 @@ namespace CameraCapture {
 		} // //////////////////////////////////////////////////////////////////////////////////
 		void inGo(Signal signal) { // пищит сигнал на подъём
 			if (signal == Signal.yes) {
-				tmrGo.Tick(tmrSit.ElapsedMilliseconds);
+				tmrGo.Tick();
 			} else if (signal == Signal.no) { // Вроде встал
 				tmrGo.Stop();
 				tmrSit.Stop();
@@ -151,8 +155,8 @@ namespace CameraCapture {
 			} else if (signal == Signal.control)
 				ToSuspend();
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void PlaySound(string fname) {
-
+		public static void PlaySound(string fname) {
+			Console.WriteLine("Sound {0}", fname);
 		} // //////////////////////////////////////////////////////////////////////////////////
 		void ToSuspend() {
 			PlaySound(SOUND_NOTIFY_SUSPEND);
@@ -161,24 +165,43 @@ namespace CameraCapture {
 			tmrGo.Reset();
 			mode = Modes.Suspend;
 		} // //////////////////////////////////////////////////////////////////////////////////
+		Go tmrGo = new Go();
 		class Go : Stopwatch {
-			long intervalBigSound = 1 * 60;
-			long intervalSmallSound = 5;
-			long tmrGo = 0;
 			int cnt = 0;
+			Stopwatch tmrSmall = new Stopwatch();
+			Stopwatch tmrBig = new Stopwatch();
 			public new void Start() {
 				base.Start();
-			}
+				tmrSmall.Start();
+				tmrBig.Start();
+			} // //////////////////////////////////////////////////////////////////////////////////////
 			public new void Stop() {
 				base.Stop();
-			}
+				tmrSmall.Reset();
+				tmrBig.Reset();
+			} // //////////////////////////////////////////////////////////////////////////////////////
 			public new void Reset() {
 				base.Reset();
-			}
-			public void Tick(long msec) {
-
-			}
+				tmrSmall.Reset();
+				tmrBig.Reset();
+			} // //////////////////////////////////////////////////////////////////////////////////////
+			public void Tick() {
+				if (tmrBig.ElapsedMilliseconds / 1000 > Intervals.GoBigSound) {
+					++cnt;
+					for (int n = 0; n < cnt; n++) {
+						PlaySound(SOUND_NOTIFY_GO_SMALL_TICK);
+						PlaySound(SOUND_SILENT);
+					}
+					tmrBig.Reset();
+					tmrBig.Start();
+					tmrSmall.Reset();
+					tmrSmall.Start();
+				} else if (tmrSmall.ElapsedMilliseconds / 1000 > Intervals.GoSmallSound) {
+					PlaySound(SOUND_NOTIFY_GO_BIG_TICK);
+					tmrSmall.Reset();
+					tmrSmall.Start();
+				}
+			} // //////////////////////////////////////////////////////////////////////////////////////
 		} // ** Go ***********************************************************************************
-		Go tmrGo = new Go();
 	} // ** Phases ***********************************************************************************
 }

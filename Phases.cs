@@ -12,6 +12,7 @@ namespace CameraCapture {
 	};
 	class Phases {
 		long IntervalSit = 30 * 60;
+		long IntervalOut =  1 * 60;
 		enum Modes {
 			Suspend,
 			Sit,
@@ -27,22 +28,22 @@ namespace CameraCapture {
 		public void Run(Signal signal) {
 			switch (mode) {
 				case Modes.Suspend:
-					inSuspend(i);
+					inSuspend(signal);
 					break;
 				case Modes.Sit:
-					inSit(i);
+					inSit(signal);
 					break;
 				case Modes.MaybeOut:
-					inMaybeOut(i);
+					inMaybeOut(signal);
 					break;
 				case Modes.Go:
-					inGo(i);
+					inGo(signal);
 					break;
 				case Modes.Ex:
-					inEx(i);
+					inEx(signal);
 					break;
 				case Modes.GoBack:
-					inGoBack(i);
+					inGoBack(signal);
 					break;
 				default:
 					Console.WriteLine("Wrong case!");
@@ -52,7 +53,8 @@ namespace CameraCapture {
 		void inSuspend(Signal signal) {
 			if (signal == Signal.yes) {
 				tmrSit.Start();
-				tmrOut.Stop();
+				tmrOut.Reset();
+				tmrGo.Reset();
 				mode = Modes.Sit;
 			}
 		} // //////////////////////////////////////////////////////////////////////////////////
@@ -68,42 +70,80 @@ namespace CameraCapture {
 				tmrOut.Start();
 				mode = Modes.MaybeOut;
 			} else if (signal == Signal.control) {
-				tmrSit.Reset();
-				tmrSit.Start();
+				ToSuspend();
 			}
 		} // //////////////////////////////////////////////////////////////////////////////////
 		void inMaybeOut(Signal signal) {
 			if (signal == Signal.yes) {
 				tmrSit.Start();
-				tmrOut.Stop();
+				tmrOut.Reset();
 				mode = Modes.Sit;
-			} else {
-
+			} else if (signal == Signal.no) {
+				if (tmrOut.ElapsedMilliseconds / 1000 > IntervalOut) {
+					tmrGo.Start();
+					PlaySound();
+					mode = Modes.Go;
+				}
+			} else if (signal == Signal.control) {
+				ToSuspend();
+				tmrSit.Start();
 			}
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inGo(Signal signal) {
-			if (i) {
-
-			} else {
-
+		void inGo(Signal signal) { ///!!!
+			if (signal == Signal.yes) {
+				if (tmrOut.ElapsedMilliseconds / 1000 > IntervalOut) {
+					tmrGo.Start();
+					PlaySound();
+					mode = Modes.Go;
+				}
+			} else if (signal == Signal.no) {
+				tmrSit.Start();
+				tmrOut.Reset();
+				mode = Modes.Sit;
+			} else if (signal == Signal.control) {
+				ToSuspend();
 			}
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inEx(Signal signal) {
-			if (i) {
-
-			} else {
-
+		void inEx(Signal signal) { ///!!!!
+			if (signal == Signal.yes) {
+				tmrSit.Start();
+				tmrOut.Reset();
+				mode = Modes.Sit;
+			} else if (signal == Signal.no) {
+				if (tmrOut.ElapsedMilliseconds / 1000 > IntervalOut) {
+					tmrGo.Start();
+					PlaySound();
+					mode = Modes.Go;
+				}
+			} else if (signal == Signal.control) {
+				ToSuspend();
+				tmrSit.Start();
 			}
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inGoBack(Signal signal) {
-			if (i) {
-
-			} else {
-
+		void inGoBack(Signal signal) { ///!!!!!
+			if (signal == Signal.yes) {
+				tmrSit.Start();
+				tmrOut.Reset();
+				mode = Modes.Sit;
+			} else if (signal == Signal.no) {
+				if (tmrOut.ElapsedMilliseconds / 1000 > IntervalOut) {
+					tmrGo.Start();
+					PlaySound();
+					mode = Modes.Go;
+				}
+			} else if (signal == Signal.control) {
+				ToSuspend();
+				tmrSit.Start();
 			}
 		} // //////////////////////////////////////////////////////////////////////////////////
 		void PlaySound() {
 
+		} // //////////////////////////////////////////////////////////////////////////////////
+		void ToSuspend() {
+			tmrSit.Reset();
+			tmrOut.Reset();
+			tmrGo.Reset();
+			mode = Modes.Suspend;
 		} // //////////////////////////////////////////////////////////////////////////////////
 	} // *************************************************************************************
 }

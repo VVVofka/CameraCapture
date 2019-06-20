@@ -11,20 +11,28 @@ namespace CameraCapture {
 		control
 	};
 	class Phases {
-		long IntervalSit = 30 * 60;
-		long IntervalOut =  1 * 60;
+		static class Intervals {
+			static public long Sit = 30 * 60;   // по истечении переход в mode.Go
+			static public long ShortUp = 12;    // по истечении переход в mode.Ex
+			static public long Ex = 1 * 60;     // по истечении переход в mode.Suspend
+		}
 		enum Modes {
 			Suspend,
 			Sit,
-			MaybeOut,
+			ShortUpInSit,
+			ExAfterSit,
 			Go,
-			Ex,
-			GoBack
+			ShortUpAfterGo,
+			ExAfterGo
 		};
+		readonly string SOUND_GO_BACK = ""; // !!!
+		readonly string SOUND_NOTIFY_EX = ""; // !!!
+		readonly string SOUND_EX_COMPLETE = ""; // !!!
+		readonly string SOUND_NOTIFY_SUSPEND = ""; // !!!
+
 		Modes mode = Modes.Suspend;
 		Stopwatch tmrSit = new Stopwatch();
 		Stopwatch tmrOut = new Stopwatch();
-		Stopwatch tmrGo = new Stopwatch();
 		public void Run(Signal signal) {
 			switch (mode) {
 				case Modes.Suspend:
@@ -33,17 +41,20 @@ namespace CameraCapture {
 				case Modes.Sit:
 					inSit(signal);
 					break;
-				case Modes.MaybeOut:
-					inMaybeOut(signal);
+				case Modes.ShortUpInSit:
+					inShortUpInSit(signal);
+					break;
+				case Modes.ExAfterSit:
+					inExAfterSit(signal);
 					break;
 				case Modes.Go:
 					inGo(signal);
 					break;
-				case Modes.Ex:
-					inEx(signal);
+				case Modes.ShortUpAfterGo:
+					inShortUpAfterGo(signal);
 					break;
-				case Modes.GoBack:
-					inGoBack(signal);
+				case Modes.ExAfterGo:
+					inExAfterGo(signal);
 					break;
 				default:
 					Console.WriteLine("Wrong case!");
@@ -60,90 +71,114 @@ namespace CameraCapture {
 		} // //////////////////////////////////////////////////////////////////////////////////
 		void inSit(Signal signal) {
 			if (signal == Signal.yes) {
-				if(tmrSit.ElapsedMilliseconds / 1000 > IntervalSit) {
+				if (tmrSit.ElapsedMilliseconds / 1000 > Intervals.Sit) { //  пора вставать
 					tmrGo.Start();
-					PlaySound();
 					mode = Modes.Go;
 				}
-			} else if(signal == Signal.no){
-				tmrSit.Stop();
+			} else if (signal == Signal.no) { // возможно встал
+				tmrOut.Reset();
 				tmrOut.Start();
-				mode = Modes.MaybeOut;
-			} else if (signal == Signal.control) {
+				mode = Modes.ShortUpInSit;
+			} else if (signal == Signal.control)
 				ToSuspend();
-			}
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inMaybeOut(Signal signal) {
+		void inShortUpInSit(Signal signal) {
 			if (signal == Signal.yes) {
+				tmrSit.Start(); // continue
+				tmrOut.Reset();
+				mode = Modes.Sit;
+			} else if (signal == Signal.no) {
+				if (tmrOut.ElapsedMilliseconds / 1000 > Intervals.ShortUp) { // Начал заниматься
+					tmrSit.Stop();
+					PlaySound(SOUND_NOTIFY_EX);
+					mode = Modes.ExAfterGo;
+				}
+			} else if (signal == Signal.control)
+				ToSuspend();
+		} // //////////////////////////////////////////////////////////////////////////////////
+		void inExAfterSit(Signal signal) { //
+			if (signal == Signal.yes) { // это была не полноценная тренировка!
 				tmrSit.Start();
 				tmrOut.Reset();
 				mode = Modes.Sit;
 			} else if (signal == Signal.no) {
-				if (tmrOut.ElapsedMilliseconds / 1000 > IntervalOut) {
-					tmrGo.Start();
-					PlaySound();
-					mode = Modes.Go;
+				if (tmrOut.ElapsedMilliseconds / 1000 > Intervals.Ex) { // досрочная тренировка окончена
+					PlaySound(SOUND_EX_COMPLETE);
+					ToSuspend();
 				}
-			} else if (signal == Signal.control) {
+			} else if (signal == Signal.control)
 				ToSuspend();
-				tmrSit.Start();
-			}
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inGo(Signal signal) { ///!!!
+		void inGo(Signal signal) { // пищит сигнал на подъём
 			if (signal == Signal.yes) {
-				if (tmrOut.ElapsedMilliseconds / 1000 > IntervalOut) {
-					tmrGo.Start();
-					PlaySound();
-					mode = Modes.Go;
-				}
-			} else if (signal == Signal.no) {
+				tmrGo.Tick(tmrSit.ElapsedMilliseconds);
+			} else if (signal == Signal.no) { // Вроде встал
+				tmrGo.Stop();
+				tmrSit.Stop();
+				tmrOut.Reset();
+				tmrOut.Start();
+				mode = Modes.ShortUpAfterGo;
+			} else if (signal == Signal.control)
+				ToSuspend();
+		} // //////////////////////////////////////////////////////////////////////////////////
+		void inShortUpAfterGo(Signal signal) { //
+			if (signal == Signal.yes) { // ложная тревога, продолжает сидеть сволочь!
+				tmrGo.Start();
 				tmrSit.Start();
 				tmrOut.Reset();
-				mode = Modes.Sit;
-			} else if (signal == Signal.control) {
-				ToSuspend();
-			}
-		} // //////////////////////////////////////////////////////////////////////////////////
-		void inEx(Signal signal) { ///!!!!
-			if (signal == Signal.yes) {
-				tmrSit.Start();
-				tmrOut.Reset();
-				mode = Modes.Sit;
+				mode = Modes.Go;
 			} else if (signal == Signal.no) {
-				if (tmrOut.ElapsedMilliseconds / 1000 > IntervalOut) {
-					tmrGo.Start();
-					PlaySound();
-					mode = Modes.Go;
+				if (tmrOut.ElapsedMilliseconds / 1000 > Intervals.ShortUp) { // Начал заниматься
+					tmrSit.Stop();
+					tmrGo.Stop();
+					PlaySound(SOUND_NOTIFY_EX);
+					mode = Modes.ExAfterGo;
 				}
-			} else if (signal == Signal.control) {
+			} else if (signal == Signal.control)
 				ToSuspend();
-				tmrSit.Start();
-			}
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inGoBack(Signal signal) { ///!!!!!
-			if (signal == Signal.yes) {
+		void inExAfterGo(Signal signal) { ///!!!!
+			if (signal == Signal.yes) { // это была не полноценная тренировка!
 				tmrSit.Start();
+				tmrGo.Start();
 				tmrOut.Reset();
-				mode = Modes.Sit;
+				mode = Modes.Go;
 			} else if (signal == Signal.no) {
-				if (tmrOut.ElapsedMilliseconds / 1000 > IntervalOut) {
-					tmrGo.Start();
-					PlaySound();
-					mode = Modes.Go;
+				if (tmrOut.ElapsedMilliseconds / 1000 > Intervals.Ex) { // плановая тренировка окончена
+					PlaySound(SOUND_EX_COMPLETE);
+					ToSuspend();
 				}
-			} else if (signal == Signal.control) {
+			} else if (signal == Signal.control)
 				ToSuspend();
-				tmrSit.Start();
-			}
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void PlaySound() {
+		void PlaySound(string fname) {
 
 		} // //////////////////////////////////////////////////////////////////////////////////
 		void ToSuspend() {
+			PlaySound(SOUND_NOTIFY_SUSPEND);
 			tmrSit.Reset();
 			tmrOut.Reset();
 			tmrGo.Reset();
 			mode = Modes.Suspend;
 		} // //////////////////////////////////////////////////////////////////////////////////
-	} // *************************************************************************************
+		class Go : Stopwatch {
+			long intervalBigSound = 1 * 60;
+			long intervalSmallSound = 5;
+			long tmrGo = 0;
+			int cnt = 0;
+			public new void Start() {
+				base.Start();
+			}
+			public new void Stop() {
+				base.Stop();
+			}
+			public new void Reset() {
+				base.Reset();
+			}
+			public void Tick(long msec) {
+
+			}
+		} // ** Go ***********************************************************************************
+		Go tmrGo = new Go();
+	} // ** Phases ***********************************************************************************
 }

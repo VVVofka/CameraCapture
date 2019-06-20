@@ -26,6 +26,8 @@ namespace CameraCapture {
 		private Mat _smoothedGrayFrame;
 		private Mat _cannyFrame;
 		private Gemor gemor = new Gemor();
+		private Phases phases = new Phases();
+		Signal signal = Signal.nodef;
 
 		public CameraCapture() {
 			InitializeComponent();
@@ -113,7 +115,14 @@ namespace CameraCapture {
 			foreach (Rectangle eye in eyes)
 				CvInvoke.Rectangle(image, eye, new Bgr(Color.Blue).MCvScalar, 2);
 			double r = gemor.put(faces.Count > 0);
-			if(faces.Count > 0)
+			
+			if (r < 0.4 && signal == Signal.yes)
+				signal = Signal.no;
+			else if (r > 0.6 && signal == Signal.no)
+				signal = Signal.yes;
+			phases.Run(signal);
+			/*
+			if (faces.Count > 0)
 				using (InputArray iaImage = image.GetInputArray()) {
 					string sreport = String.Format(
 					   "Completed face detection using {0} in {1} milliseconds. Rct={2} x {3} r={4}",
@@ -124,6 +133,7 @@ namespace CameraCapture {
 				}
 			else
 				Console.WriteLine(r.ToString());
+				*/
 		}
 
 	} // *************************************************************************************************************

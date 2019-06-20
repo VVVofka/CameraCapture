@@ -6,6 +6,7 @@ using System.Text;
 
 namespace CameraCapture {
 	enum Signal {
+		nodef,
 		no,
 		yes,
 		control

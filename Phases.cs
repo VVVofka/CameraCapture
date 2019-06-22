@@ -14,9 +14,9 @@ namespace CameraCapture {
 	};
 	class Phases {
 		public static class Intervals {
-			static public int Sit = 1 * 60;   // по истечении переход в mode.Go
-			static public int ShortUp = 5;    // по истечении переход в mode.Ex
-			static public int Ex = 40;     // по истечении переход в mode.Suspend
+			static public int Sit = 1 * 50;   // по истечении переход в mode.Go
+			static public int ShortUp = 10;    // по истечении переход в mode.Ex
+			static public int Ex = 30;     // по истечении переход в mode.Suspend
 			static public int GoBigSound = 15; // большое напоминание встать
 			static public int GoSmallSound = 5;// короткое напоминание встать
 		}
@@ -39,7 +39,7 @@ namespace CameraCapture {
 		Modes mode = Modes.Suspend;
 		MyStopwatch tmrSit = new MyStopwatch();
 		MyStopwatch tmrOut = new MyStopwatch();
-		public void Run(Signal signal, double r) {
+		public string Run(Signal signal, double r) {
 			bool show = false;
 			switch (mode) {
 				case Modes.Suspend:
@@ -68,7 +68,10 @@ namespace CameraCapture {
 					break;
 			}   // switch (mode) 
 			if (show)
-				Console.WriteLine("Signal:{0} mode:{1} tmrSit:{2} tmrOut:{3} tmrGo:{4} r={5}", signal, mode, tmrSit, tmrOut, tmrGo, r);
+				Console.WriteLine("Sgnl:{0} mode:{1} tmrSit:{2} tmrOut:{3} tmrGo:{4} r={5}", 
+										signal, mode, tmrSit, tmrOut, tmrGo, r);
+			return string.Format("{0} {1} s:{2} o:{3} g:{4} r={5}",
+										signal, mode, tmrSit, tmrOut, tmrGo, r);
 		} // //////////////////////////////////////////////////////////////////////////////////
 		bool inSuspend(Signal signal) {
 			if (signal == Signal.yes) {
@@ -89,6 +92,7 @@ namespace CameraCapture {
 				}
 			} else if (signal == Signal.no) { // возможно встал
 				tmrOut.Restart();
+				tmrSit.Stop();
 				mode = Modes.ShortUpInSit;
 				return true;
 			} else if (signal == Signal.control) {
@@ -137,7 +141,7 @@ namespace CameraCapture {
 		bool inGo(Signal signal) { // пищит сигнал на подъём
 			if (signal == Signal.yes) {
 				tmrGo.Tick();
-				return true;
+				return false;
 			} else if (signal == Signal.no) { // Вроде встал
 				tmrGo.Stop();
 				tmrSit.Stop();
@@ -162,7 +166,7 @@ namespace CameraCapture {
 				if (tmrOut > Intervals.ShortUp) { // Начал заниматься
 					tmrSit.Stop();
 					tmrGo.Stop();
-					PlaySound(SOUND_NOTIFY_EX);
+					//PlaySound(SOUND_NOTIFY_EX);
 					mode = Modes.ExAfterGo;
 					return true;
 				}
@@ -172,10 +176,10 @@ namespace CameraCapture {
 			}
 			return false;
 		} // //////////////////////////////////////////////////////////////////////////////////
-		bool inExAfterGo(Signal signal) { ///!!!!
+		bool inExAfterGo(Signal signal) { //
 			if (signal == Signal.yes) { // это была не полноценная тренировка!
-				tmrSit.Start();
 				tmrGo.Start();
+				tmrSit.Start();
 				tmrOut.Reset();
 				mode = Modes.Go;
 				return true;
@@ -219,6 +223,7 @@ namespace CameraCapture {
 				base.Start();
 				tmrSmall.Start();
 				tmrBig.Start();
+				PlaySound(SOUND_NOTIFY_GO_BIG_TICK);
 			} // //////////////////////////////////////////////////////////////////////////////////////
 			public new void Stop() {
 				base.Stop();

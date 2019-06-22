@@ -119,7 +119,10 @@ namespace CameraCapture {
 				signal = Signal.no;
 			else if (r > 0.6 && (signal == Signal.no || signal == Signal.nodef))
 				signal = Signal.yes;
-			phases.Run(signal, r);
+			string sret = phases.Run(signal, r);
+			//lbDbgTimers.Text = sret;
+			MCvScalar color = new MCvScalar(255, 0, 255, 0);
+			CvInvoke.PutText(image, sret, new Point(2, 25), FontFace.HersheyComplexSmall, 1, color); //_grayFrame
 			if (signal == Signal.nodef && false)
 				if (faces.Count > 0)
 					using (InputArray iaImage = image.GetInputArray()) {
@@ -136,6 +139,8 @@ namespace CameraCapture {
 		private void CameraCapture_Shown(object sender, EventArgs e) {
 			captureButtonClick(null, null);
 			FlipHorizontalButtonClick(null, null);
+			string sret = "zzzzzzzzzzzzzzzz";
+			lbDbgTimers.Text = sret;
 		} // ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	} // *************************************************************************************************************
 }

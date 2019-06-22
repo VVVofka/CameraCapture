@@ -55,7 +55,7 @@ namespace CameraCapture
 			this.cannyImageBox = new Emgu.CV.UI.ImageBox();
 			this.panel4 = new System.Windows.Forms.Panel();
 			this.label4 = new System.Windows.Forms.Label();
-			this.label5 = new System.Windows.Forms.Label();
+			this.lbDbgTimers = new System.Windows.Forms.Label();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
 			this.splitContainer1.SuspendLayout();
@@ -87,7 +87,6 @@ namespace CameraCapture
 			// 
 			// splitContainer1.Panel1
 			// 
-			this.splitContainer1.Panel1.Controls.Add(this.label5);
 			this.splitContainer1.Panel1.Controls.Add(this.txMinObjectSize);
 			this.splitContainer1.Panel1.Controls.Add(this.lbMinObjectSize);
 			this.splitContainer1.Panel1.Controls.Add(this.txMinNeighbors);
@@ -238,6 +237,7 @@ namespace CameraCapture
 			// 
 			// panel1
 			// 
+			this.panel1.Controls.Add(this.lbDbgTimers);
 			this.panel1.Controls.Add(this.label1);
 			this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
 			this.panel1.Location = new System.Drawing.Point(0, 0);
@@ -355,14 +355,14 @@ namespace CameraCapture
 			this.label4.TabIndex = 0;
 			this.label4.Text = "Canny Edges:";
 			// 
-			// label5
+			// lbDbgTimers
 			// 
-			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(529, 31);
-			this.label5.Name = "label5";
-			this.label5.Size = new System.Drawing.Size(35, 13);
-			this.label5.TabIndex = 9;
-			this.label5.Text = "label5";
+			this.lbDbgTimers.AutoSize = true;
+			this.lbDbgTimers.Location = new System.Drawing.Point(103, 10);
+			this.lbDbgTimers.Name = "lbDbgTimers";
+			this.lbDbgTimers.Size = new System.Drawing.Size(67, 13);
+			this.lbDbgTimers.TabIndex = 9;
+			this.lbDbgTimers.Text = "debug timers";
 			// 
 			// CameraCapture
 			// 
@@ -429,7 +429,7 @@ namespace CameraCapture
 		private System.Windows.Forms.Label lbMinNeighbors;
 		private System.Windows.Forms.TextBox txMinObjectSize;
 		private System.Windows.Forms.Label lbMinObjectSize;
-		private System.Windows.Forms.Label label5;
+		private System.Windows.Forms.Label lbDbgTimers;
 	}
 }
 

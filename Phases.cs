@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Media;
 using System.Text;
 
 namespace CameraCapture {
@@ -13,11 +14,11 @@ namespace CameraCapture {
 	};
 	class Phases {
 		public static class Intervals {
-			static public long Sit = 5 * 60;   // по истечении переход в mode.Go
-			static public long ShortUp = 10;    // по истечении переход в mode.Ex
-			static public long Ex = 45;     // по истечении переход в mode.Suspend
-			static public long GoBigSound = 60; // большое напоминание встать
-			static public long GoSmallSound = 5;// короткое напоминание встать
+			static public int Sit = 1 * 60;   // по истечении переход в mode.Go
+			static public int ShortUp = 5;    // по истечении переход в mode.Ex
+			static public int Ex = 40;     // по истечении переход в mode.Suspend
+			static public int GoBigSound = 15; // большое напоминание встать
+			static public int GoSmallSound = 5;// короткое напоминание встать
 		}
 		enum Modes {
 			Suspend,
@@ -28,137 +29,179 @@ namespace CameraCapture {
 			ShortUpAfterGo,
 			ExAfterGo
 		};
-		readonly string SOUND_NOTIFY_EX = ""; // !!!
-		readonly string SOUND_EX_COMPLETE = ""; // !!!
-		readonly string SOUND_NOTIFY_SUSPEND = ""; // !!!
-		static public readonly string SOUND_NOTIFY_GO_SMALL_TICK = ""; // !!!
-		static public readonly string SOUND_NOTIFY_GO_BIG_TICK = ""; // !!!
+		readonly string SOUND_NOTIFY_EX = "Go.wav"; // !!!
+		readonly string SOUND_EX_COMPLETE = "GoBack.wav"; // !!!
+		readonly string SOUND_NOTIFY_SUSPEND = "Suspend.wav"; // !!!
+		static public readonly string SOUND_NOTIFY_GO_SMALL_TICK = "Short.wav"; // !!!
+		static public readonly string SOUND_NOTIFY_GO_BIG_TICK = "Big.wav"; // !!!
 		static public readonly string SOUND_SILENT = ""; // !!!
 
 		Modes mode = Modes.Suspend;
-		Stopwatch tmrSit = new Stopwatch();
-		Stopwatch tmrOut = new Stopwatch();
-		public void Run(Signal signal) {
+		MyStopwatch tmrSit = new MyStopwatch();
+		MyStopwatch tmrOut = new MyStopwatch();
+		public void Run(Signal signal, double r) {
+			bool show = false;
 			switch (mode) {
 				case Modes.Suspend:
-					inSuspend(signal);
+					show = inSuspend(signal);
 					break;
 				case Modes.Sit:
-					inSit(signal);
+					show = inSit(signal);
 					break;
 				case Modes.ShortUpInSit:
-					inShortUpInSit(signal);
+					show = inShortUpInSit(signal);
 					break;
 				case Modes.ExAfterSit:
-					inExAfterSit(signal);
+					show = inExAfterSit(signal);
 					break;
 				case Modes.Go:
-					inGo(signal);
+					show = inGo(signal);
 					break;
 				case Modes.ShortUpAfterGo:
-					inShortUpAfterGo(signal);
+					show = inShortUpAfterGo(signal);
 					break;
 				case Modes.ExAfterGo:
-					inExAfterGo(signal);
+					show = inExAfterGo(signal);
 					break;
 				default:
 					Console.WriteLine("Wrong case!");
 					break;
 			}   // switch (mode) 
-			Console.WriteLine("Signal:{0} mode:{1} tmrSit:{2} tmrOut:{3}", signal, mode, tmrSit, tmrOut, tmrGo);
+			if (show)
+				Console.WriteLine("Signal:{0} mode:{1} tmrSit:{2} tmrOut:{3} tmrGo:{4} r={5}", signal, mode, tmrSit, tmrOut, tmrGo, r);
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inSuspend(Signal signal) {
+		bool inSuspend(Signal signal) {
 			if (signal == Signal.yes) {
 				tmrSit.Start();
 				tmrOut.Reset();
 				tmrGo.Reset();
 				mode = Modes.Sit;
+				return true;
 			}
+			return false;
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inSit(Signal signal) {
+		bool inSit(Signal signal) {
 			if (signal == Signal.yes) {
-				if (tmrSit.ElapsedMilliseconds / 1000 > Intervals.Sit) { //  пора вставать
+				if (tmrSit > Intervals.Sit) { //  пора вставать
 					tmrGo.Start();
 					mode = Modes.Go;
+					return true;
 				}
 			} else if (signal == Signal.no) { // возможно встал
-				tmrOut.Reset();
-				tmrOut.Start();
+				tmrOut.Restart();
 				mode = Modes.ShortUpInSit;
-			} else if (signal == Signal.control)
+				return true;
+			} else if (signal == Signal.control) {
 				ToSuspend();
+				return true;
+			}
+			return false;
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inShortUpInSit(Signal signal) {
+		bool inShortUpInSit(Signal signal) {
 			if (signal == Signal.yes) {
 				tmrSit.Start(); // continue
 				tmrOut.Reset();
 				mode = Modes.Sit;
+				return true;
 			} else if (signal == Signal.no) {
-				if (tmrOut.ElapsedMilliseconds / 1000 > Intervals.ShortUp) { // Начал заниматься
+				if (tmrOut > Intervals.ShortUp) { // Начал заниматься
 					tmrSit.Stop();
 					PlaySound(SOUND_NOTIFY_EX);
 					mode = Modes.ExAfterGo;
+					return true;
 				}
-			} else if (signal == Signal.control)
+			} else if (signal == Signal.control) {
 				ToSuspend();
+				return true;
+			}
+			return false;
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inExAfterSit(Signal signal) { //
+		bool inExAfterSit(Signal signal) { //
 			if (signal == Signal.yes) { // это была не полноценная тренировка!
 				tmrSit.Start();
 				tmrOut.Reset();
 				mode = Modes.Sit;
+				return true;
 			} else if (signal == Signal.no) {
-				if (tmrOut.ElapsedMilliseconds / 1000 > Intervals.Ex) { // досрочная тренировка окончена
+				if (tmrOut > Intervals.Ex) { // досрочная тренировка окончена
 					PlaySound(SOUND_EX_COMPLETE);
 					ToSuspend();
+					return true;
 				}
-			} else if (signal == Signal.control)
+			} else if (signal == Signal.control) {
 				ToSuspend();
+				return true;
+			}
+			return false;
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inGo(Signal signal) { // пищит сигнал на подъём
+		bool inGo(Signal signal) { // пищит сигнал на подъём
 			if (signal == Signal.yes) {
 				tmrGo.Tick();
+				return true;
 			} else if (signal == Signal.no) { // Вроде встал
 				tmrGo.Stop();
 				tmrSit.Stop();
 				tmrOut.Reset();
 				tmrOut.Start();
 				mode = Modes.ShortUpAfterGo;
-			} else if (signal == Signal.control)
+				return true;
+			} else if (signal == Signal.control) {
 				ToSuspend();
+				return true;
+			}
+			return false;
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inShortUpAfterGo(Signal signal) { //
+		bool inShortUpAfterGo(Signal signal) { //
 			if (signal == Signal.yes) { // ложная тревога, продолжает сидеть сволочь!
 				tmrGo.Start();
 				tmrSit.Start();
 				tmrOut.Reset();
 				mode = Modes.Go;
+				return true;
 			} else if (signal == Signal.no) {
-				if (tmrOut.ElapsedMilliseconds / 1000 > Intervals.ShortUp) { // Начал заниматься
+				if (tmrOut > Intervals.ShortUp) { // Начал заниматься
 					tmrSit.Stop();
 					tmrGo.Stop();
 					PlaySound(SOUND_NOTIFY_EX);
 					mode = Modes.ExAfterGo;
+					return true;
 				}
-			} else if (signal == Signal.control)
+			} else if (signal == Signal.control) {
 				ToSuspend();
+				return true;
+			}
+			return false;
 		} // //////////////////////////////////////////////////////////////////////////////////
-		void inExAfterGo(Signal signal) { ///!!!!
+		bool inExAfterGo(Signal signal) { ///!!!!
 			if (signal == Signal.yes) { // это была не полноценная тренировка!
 				tmrSit.Start();
 				tmrGo.Start();
 				tmrOut.Reset();
 				mode = Modes.Go;
+				return true;
 			} else if (signal == Signal.no) {
-				if (tmrOut.ElapsedMilliseconds / 1000 > Intervals.Ex) { // плановая тренировка окончена
+				if (tmrOut > Intervals.Ex) { // плановая тренировка окончена
 					PlaySound(SOUND_EX_COMPLETE);
 					ToSuspend();
+					return true;
 				}
-			} else if (signal == Signal.control)
+			} else if (signal == Signal.control) {
 				ToSuspend();
+				return true;
+			}
+			return false;
 		} // //////////////////////////////////////////////////////////////////////////////////
 		public static void PlaySound(string fname) {
 			Console.WriteLine("Sound {0}", fname);
+			System.Reflection.Assembly a = System.Reflection.Assembly.GetExecutingAssembly();
+			//System.IO.Stream s = a.GetManifestResourceStream("CameraCapture.Sounds.Big.wav");
+			System.IO.Stream s = a.GetManifestResourceStream("CameraCapture.Sounds." + fname);
+			SoundPlayer player = new SoundPlayer(s);
+			player.Play();
+
+			//SoundPlayer simpleSound = new SoundPlayer(@"c:\Windows\Media\chimes.wav");
+			//simpleSound.Play();
+			//SystemSounds.Asterisk.Play();
 		} // //////////////////////////////////////////////////////////////////////////////////
 		void ToSuspend() {
 			PlaySound(SOUND_NOTIFY_SUSPEND);
@@ -168,10 +211,10 @@ namespace CameraCapture {
 			mode = Modes.Suspend;
 		} // //////////////////////////////////////////////////////////////////////////////////
 		Go tmrGo = new Go();
-		class Go : Stopwatch {
+		class Go : MyStopwatch {
 			int cnt = 0;
-			Stopwatch tmrSmall = new Stopwatch();
-			Stopwatch tmrBig = new Stopwatch();
+			MyStopwatch tmrSmall = new MyStopwatch();
+			MyStopwatch tmrBig = new MyStopwatch();
 			public new void Start() {
 				base.Start();
 				tmrSmall.Start();
@@ -188,21 +231,21 @@ namespace CameraCapture {
 				tmrBig.Reset();
 			} // //////////////////////////////////////////////////////////////////////////////////////
 			public void Tick() {
-				if (tmrBig.ElapsedMilliseconds / 1000 > Intervals.GoBigSound) {
+				if (tmrBig > Intervals.GoBigSound) {
 					++cnt;
 					for (int n = 0; n < cnt; n++) {
 						PlaySound(SOUND_NOTIFY_GO_SMALL_TICK);
 						PlaySound(SOUND_SILENT);
 					}
-					tmrBig.Reset();
-					tmrBig.Start();
-					tmrSmall.Reset();
-					tmrSmall.Start();
-				} else if (tmrSmall.ElapsedMilliseconds / 1000 > Intervals.GoSmallSound) {
+					tmrBig.Restart();
+					tmrSmall.Restart();
+				} else if (tmrSmall > Intervals.GoSmallSound) {
 					PlaySound(SOUND_NOTIFY_GO_BIG_TICK);
-					tmrSmall.Reset();
-					tmrSmall.Start();
+					tmrSmall.Restart();
 				}
+			} // //////////////////////////////////////////////////////////////////////////////////////
+			public override string ToString() {
+				return "`" + base.ToString() + " small:" + tmrSmall.ToString() + " big:" + tmrBig.ToString() + " cnt:" + cnt + "`";
 			} // //////////////////////////////////////////////////////////////////////////////////////
 		} // ** Go ***********************************************************************************
 	} // ** Phases ***********************************************************************************

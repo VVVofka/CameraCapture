@@ -1,13 +1,11 @@
-//----------------------------------------------------------------------------
-//  Copyright (C) 2004-2019 by EMGU Corporation. All rights reserved.       
-//----------------------------------------------------------------------------
-
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.Media;
+using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 using Emgu.CV;
@@ -74,6 +72,7 @@ namespace CameraCapture {
 					//start the capture
 					captureButton.Text = "Stop";
 					_capture.Start();
+					//_capture.FlipHorizontal = !_capture.FlipHorizontal; // my
 				}
 			}
 			_captureInProgress = !_captureInProgress;
@@ -91,7 +90,7 @@ namespace CameraCapture {
 				_capture.FlipVertical = !_capture.FlipVertical;
 		} // /////////////////////////////////////////////////////////////////////////////////////////////////////////
 		private void Run(UMat image) { //!!!UMat
-			
+
 			//IImage image;
 			//Read the files as an 8-bit Bgr image  
 
@@ -102,9 +101,9 @@ namespace CameraCapture {
 			List<Rectangle> faces = new List<Rectangle>();
 			List<Rectangle> eyes = new List<Rectangle>();
 
-//			DetectFace.Detect(
-//			  image, "haarcascade_frontalface_default.xml", "haarcascade_eye.xml",
-//			  faces, eyes, out detectionTime);
+			//			DetectFace.Detect(
+			//			  image, "haarcascade_frontalface_default.xml", "haarcascade_eye.xml",
+			//			  faces, eyes, out detectionTime);
 			DetectFace.DetectOnlyFace(
 			  image, "haarcascade_frontalface_default.xml",
 			  faces, out detectionTime,
@@ -115,26 +114,28 @@ namespace CameraCapture {
 			foreach (Rectangle eye in eyes)
 				CvInvoke.Rectangle(image, eye, new Bgr(Color.Blue).MCvScalar, 2);
 			double r = gemor.put(faces.Count > 0);
-			
-			if (r < 0.4 && signal == Signal.yes)
-				signal = Signal.no;
-			else if (r > 0.6 && signal == Signal.no)
-				signal = Signal.yes;
-			phases.Run(signal);
-			/*
-			if (faces.Count > 0)
-				using (InputArray iaImage = image.GetInputArray()) {
-					string sreport = String.Format(
-					   "Completed face detection using {0} in {1} milliseconds. Rct={2} x {3} r={4}",
-					   (iaImage.Kind == InputArray.Type.CudaGpuMat && CudaInvoke.HasCuda) ? "CUDA" :
-					   (iaImage.IsUMat && CvInvoke.UseOpenCL) ? "OpenCL" : "CPU", detectionTime,
-					   faces[0].Width, faces[0].Height, r);
-					Console.WriteLine(sreport);
-				}
-			else
-				Console.WriteLine(r.ToString());
-				*/
-		}
 
+			if (r < 0.4 && (signal == Signal.yes || signal == Signal.nodef))
+				signal = Signal.no;
+			else if (r > 0.6 && (signal == Signal.no || signal == Signal.nodef))
+				signal = Signal.yes;
+			phases.Run(signal, r);
+			if (signal == Signal.nodef && false)
+				if (faces.Count > 0)
+					using (InputArray iaImage = image.GetInputArray()) {
+						string sreport = String.Format(
+						   "Completed face detection using {0} in {1} milliseconds. Rct={2} x {3} r={4}",
+						   (iaImage.Kind == InputArray.Type.CudaGpuMat && CudaInvoke.HasCuda) ? "CUDA" :
+						   (iaImage.IsUMat && CvInvoke.UseOpenCL) ? "OpenCL" : "CPU", detectionTime,
+						   faces[0].Width, faces[0].Height, r);
+						Console.WriteLine(sreport);
+					}
+				else
+					Console.WriteLine(r.ToString());
+		} // ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		private void CameraCapture_Shown(object sender, EventArgs e) {
+			captureButtonClick(null, null);
+			FlipHorizontalButtonClick(null, null);
+		} // ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	} // *************************************************************************************************************
 }
